@@ -1,0 +1,201 @@
+---
+title: "Case 5"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(data.table)
+kpi_csv <- fread("https://data.ssb.no/api/v0/dataset/1086.csv?lang=no")
+kpi_csv
+```
+```{r}
+library(rjstat)
+url <- "https://data.ssb.no/api/v0/dataset/1086.json?lang=no"
+kpi_json <- fromJSONstat(url)
+str(kpi_json)
+```
+
+```{r}
+tabell <- kpi_json[[1]]
+str(tabell)
+head(tabell)
+```
+
+```{r}
+suppressPackageStartupMessages(library(tidyverse))
+
+tabell %>%
+  group_by(statistikkvariabel) %>%
+  summarise(n=n())
+```
+
+```{r}
+kpi <- 
+  tabell %>%
+  filter(statistikkvariabel=="Konsumprisindeks (2015=100)")
+head(kpi)
+```
+
+```{r}
+library(lubridate)
+```
+
+```{r}
+kpi <-
+  kpi %>%
+  separate(måned, into=c("år", "måned"), sep="M") %>% 
+  mutate(dato=ymd(paste(år, måned, "1"))) %>% 
+  select(dato, konsumgruppe, statistikkvariabel, value)
+head(kpi)
+```
+
+```{r}
+kpi %>%
+  ggplot(aes(x=dato, y=value)) + 
+  geom_line(col="dark blue") +
+  labs(title="Konsumprisindeks - KPI \n Totalindeks (2015=100)",
+       x =" ",
+       y = "Totalindeks") +
+  theme_bw()
+```
+
+```{r}
+kpi %>%
+  filter(dato >= "2015-01-01" & dato <= "2015-12-01")
+```
+
+```{r}
+kpi %>%
+  mutate(year=year(dato)) %>% 
+  filter(year==2015) %>%
+  summarise(mean(value))
+```
+
+```{r}
+kpi %>%
+  mutate(year=year(dato)) %>% 
+  filter(year==2010) %>%
+  summarise(mean(value))
+```
+
+```{r}
+b2010 <- kpi %>%
+  mutate(year=year(dato)) %>% 
+  filter(year==2010) %>%
+  summarise(ny_basis_2010=mean(value))
+
+kpi <- 
+  kpi %>%
+  mutate(KPI_2010=100*value/b2010$ny_basis_2010)
+```
+
+```{r}
+kpi %>%
+  rename(KPI_2015=value) %>%
+  select(dato, KPI_2010, KPI_2015) %>% 
+  pivot_longer(-dato,
+               names_to = "KPI",
+               values_to = "indeks") %>% 
+  ggplot(aes(x=dato, y=indeks, col=KPI)) +
+           geom_line() +
+  labs(title="Konsumprisindeks - KPI",
+       x =" ",
+       y = "Totalindeks") +
+  theme_bw()
+```
+#Oppgave 1
+
+```{r}
+kpi %>%
+  mutate(year=year(dato)) %>% 
+  filter(year==2019-11-01) %>%
+  summarise(mean(value))
+```
+
+```{r}
+b2019 <- kpi %>%
+  mutate(year=year(dato)) %>% 
+  filter(year==2019-11-01) %>%
+  summarise(ny_basis_2019=mean(value))
+
+kpi <- 
+  kpi %>%
+  mutate(KPI_2019=100*value/b2019$ny_basis_2019)
+```
+
+```{r}
+kpi %>%
+  rename(KPI_2015=value) %>%
+  select(dato, KPI_2010, KPI_2015, KPI_2019) %>% 
+  pivot_longer(-dato,
+               names_to = "KPI",
+               values_to = "indeks") %>% 
+  ggplot(aes(x=dato, y=indeks, col=KPI)) +
+           geom_line() +
+  labs(title="Konsumprisindeks - KPI",
+       x =" ",
+       y = "Totalindeks") +
+  theme_bw()
+```
+#Oppgave 2
+
+```{r}
+okt18 <- (3259.30 + 3315.45 + 3326.76 + 3597.78 + 3666.78 + 3731.57)/6
+
+sep20 <- (3519.72 + 3520.36 +	3534.44 +	3821.26 +	3832.89 +	3944.75)/6
+
+matpros <- (sep20-okt18)/okt18*100
+
+KPI2020 <- kpi %>%
+  mutate(year=year(dato)) %>% 
+  filter(dato == "2020-09-01")
+
+KPI2018 <- kpi %>% 
+  mutate(year=year(dato)) %>% 
+  filter(dato == "2018-10-01")
+
+KPIpros <- (KPI2020$value-KPI2018$value)/KPI2018$value*100
+
+matpros - KPIpros
+```
+
+#Oppgave 3
+
+```{r}
+library(rjstat)
+url2 <- "https://data.ssb.no/api/v0/dataset/1094.json?lang=no"
+kpi_json2 <- fromJSONstat(url)
+str(kpi_json2)
+```
+
+```{r}
+tabell2 <- kpi_json2[[1]]
+str(tabell)
+head(tabell)
+```
+
+```{r}
+suppressPackageStartupMessages(library(tidyverse))
+
+tabell2 %>%
+  group_by(statistikkvariabel) %>%
+  summarise(n=n())
+```
+
+```{r}
+kpi2 <- 
+  tabell2 %>%
+  filter(statistikkvariabel=="Konsumprisindeks (2015=100)")
+head(kpi2)
+```
+
+```{r}
+kpi2 <-
+  kpi2 %>%
+  separate(måned, into=c("år", "måned"), sep="M") %>% 
+  mutate(dato=ymd(paste(år, måned, "1"))) %>% 
+  select(dato, konsumgruppe, statistikkvariabel, value)
+head(kpi2)
+```
+
